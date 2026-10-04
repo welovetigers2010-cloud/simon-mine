@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F7F3EC">
+<title>钻透 · Simon Mine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F7F3EC; --ink:#2E261C; --ink2:#4C4232; --muted:#93876F;
+  --rock:#6B5B45; --hair:rgba(46,38,28,.14);
+  --amber:#C98A2D; --emerald:#3E8E6B; --sapphire:#3D5A9E; --amethyst:#8A5BA6; --ruby:#B23A52; --topaz:#B87A2E;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans SC','PingFang SC',sans-serif;background:var(--paper);color:var(--ink);line-height:1.85;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:99;opacity:.3;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.13'/%3E%3C/svg%3E")}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px}
+.serif{font-family:'Cormorant Garamond','Noto Serif SC','Songti SC',serif}
+
+/* ============ 顶部 ============ */
+header{text-align:center;padding:calc(env(safe-area-inset-top) + 44px) 0 0}
+.kicker{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:5px;color:var(--muted);text-transform:uppercase;font-weight:600}
+h1{font-family:'Cormorant Garamond','Noto Serif SC',serif;font-size:34px;font-weight:600;letter-spacing:5px;margin-top:8px;color:var(--ink)}
+h1 .en{font-style:italic}
+h1 .zh{display:block;font-size:19px;font-weight:500;letter-spacing:6px;margin-top:2px}
+.sub{font-family:'Noto Serif SC',serif;font-size:12.5px;letter-spacing:3px;color:var(--muted);margin-top:10px}
+.hero-line{width:40px;height:1px;background:var(--ink);opacity:.25;margin:20px auto 0}
+
+/* ============ 视图切换 ============ */
+.tabs{display:flex;justify-content:center;gap:26px;margin-top:20px}
+.tab{border:none;background:none;font-family:'Noto Sans SC',sans-serif;font-size:12.5px;font-weight:900;letter-spacing:3px;color:var(--muted);cursor:pointer;padding:8px 2px;position:relative;transition:color .2s}
+.tab.on{color:var(--ink)}
+.tab.on::after{content:'';position:absolute;left:20%;right:20%;bottom:0;height:2px;background:var(--ink);border-radius:2px}
+.view{display:none}.view.on{display:block}
+
+/* ============ 金句 ============ */
+.motto{text-align:center;padding:26px 10px 6px}
+.motto .en{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;color:var(--ink2)}
+.motto .zh{font-family:'Noto Serif SC',serif;font-size:13px;letter-spacing:2px;color:var(--muted);margin-top:4px}
+
+/* ============ 卡片与矿列表 ============ */
+.sec{margin-top:30px}
+.sec-head{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--hair);padding-bottom:12px;margin-bottom:14px}
+.sec-head h2{font-family:'Cormorant Garamond','Noto Serif SC',serif;font-size:19px;font-weight:500;letter-spacing:4px}
+.sec-head .n{margin-left:auto;font-size:11px;letter-spacing:2px;color:var(--muted);font-weight:700}
+.card{background:rgba(255,255,255,.66);border:1px solid var(--hair);border-radius:20px;padding:18px 20px}
+.empty{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:1px;font-family:'Noto Serif SC',serif}
+.mine-card{background:rgba(255,255,255,.7);border:1px solid var(--hair);border-radius:20px;padding:16px 18px;margin-bottom:12px;cursor:pointer;transition:transform .15s,box-shadow .2s;position:relative;overflow:hidden}
+.mine-card:active{transform:scale(.985)}
+.mine-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--mc,#C98A2D);opacity:.75}
+.mrow{display:flex;align-items:center;gap:12px}
+.mname{font-family:'Noto Serif SC',serif;font-weight:600;font-size:17px;letter-spacing:1px}
+.mmeta{margin-left:auto;text-align:right;font-size:11px;color:var(--muted);letter-spacing:1px;line-height:1.5;flex-shrink:0}
+.mbar{height:5px;background:rgba(46,38,28,.08);border-radius:99px;margin-top:11px;overflow:hidden}
+.mbar i{display:block;height:100%;background:var(--mc,#C98A2D);border-radius:99px;transition:width .4s}
+.mstat{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:7px;letter-spacing:1px}
+
+/* ============ 表单 ============ */
+.newmine{display:flex;gap:8px;margin-top:14px}
+input[type=text],textarea{width:100%;border:1.5px solid var(--hair);background:rgba(255,255,255,.8);border-radius:14px;padding:11px 15px;font-family:'Noto Sans SC',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border .2s}
+input[type=text]:focus{border-color:var(--rock)}
+textarea{min-height:86px;line-height:1.9;font-family:'Noto Serif SC',serif;letter-spacing:.5px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{border:1.5px solid var(--hair);background:none;border-radius:999px;padding:5px 14px;font-size:11.5px;letter-spacing:1px;font-weight:700;color:var(--ink2);cursor:pointer;font-family:inherit;transition:all .2s}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn{border:none;background:var(--ink);color:var(--paper);font-family:'Noto Sans SC',sans-serif;font-weight:900;font-size:12.5px;letter-spacing:2px;padding:11px 22px;border-radius:999px;cursor:pointer;transition:transform .15s,opacity .2s;flex-shrink:0}
+.btn:active{transform:scale(.94)}
+.btn.ghost{background:none;color:var(--ink);border:1.5px solid var(--hair);font-weight:700}
+
+/* ============ 矿内视图 ============ */
+.back{border:none;background:none;font-family:'Cormorant Garamond',serif;font-size:12px;letter-spacing:3px;color:var(--muted);cursor:pointer;font-weight:600;padding:14px 0 0}
+.mhead{text-align:center;padding-top:8px}
+.mhead .badge{width:52px;height:52px;margin:0 auto;border-radius:16px;background:var(--mc);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(46,38,28,.18)}
+.mhead .badge svg{width:26px;height:26px}
+.mhead h2{font-family:'Cormorant Garamond','Noto Serif SC',serif;font-size:26px;font-weight:600;letter-spacing:3px;margin-top:10px}
+.mhead .goal{font-family:'Noto Serif SC',serif;font-size:12.5px;color:var(--muted);letter-spacing:1.5px;margin-top:3px}
+.weekbar{margin:16px auto 0;max-width:420px}
+.weekbar .lab{display:flex;justify-content:space-between;font-size:10.5px;letter-spacing:2px;color:var(--muted);font-weight:700;margin-bottom:5px}
+.weekbar .tr{height:6px;background:rgba(46,38,28,.08);border-radius:99px;overflow:hidden}
+.weekbar .tr i{display:block;height:100%;background:var(--mc);border-radius:99px;transition:width .5s}
+
+/* 钻探台 */
+.drill{margin-top:22px;background:rgba(255,255,255,.72);border:1px solid var(--hair);border-radius:24px;padding:24px 20px;text-align:center}
+.drill .dl{font-size:10.5px;letter-spacing:4px;color:var(--muted);font-weight:700}
+.drill .ct{font-family:'Cormorant Garamond','Noto Serif SC',serif;font-size:20px;font-weight:600;letter-spacing:1px;margin-top:8px}
+.ring{position:relative;width:170px;height:170px;margin:16px auto 4px}
+.ring svg{transform:rotate(-90deg)}
+.ring .t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .tt{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:40px;letter-spacing:1px;line-height:1;color:var(--ink)}
+.ring .ts{font-size:10px;letter-spacing:3px;color:var(--muted);font-weight:700;margin-top:6px}
+.dbtns{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+
+/* 输出检验 */
+.exam{margin-top:16px;display:none;text-align:left}
+.exam.on{display:block;animation:rise .4s ease}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.exam .el{font-family:'Noto Serif SC',serif;font-size:12px;letter-spacing:2px;color:var(--ink2);font-weight:600;margin-bottom:8px}
+.exam .hint{font-size:11px;color:var(--muted);letter-spacing:1px;margin-top:-4px;margin-bottom:10px;font-family:'Noto Serif SC',serif}
+
+/* 块列表 */
+.chunks{margin-top:8px}
+.chunk{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.6);border:1px solid var(--hair);border-radius:16px;padding:12px 14px;margin-bottom:9px;cursor:pointer;transition:all .2s}
+.chunk.cur{border-color:var(--mc);background:rgba(255,255,255,.92);box-shadow:0 4px 14px rgba(46,38,28,.1)}
+.chunk.done{opacity:.62}
+.chunk .st{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--hair);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px}
+.chunk.cur .st{border-color:var(--mc);background:var(--mc);color:#fff;font-weight:900}
+.chunk.done .st{border-color:transparent;background:none}
+.chunk.done .st svg{width:15px;height:15px}
+.chunk .ctt{font-size:14px;font-weight:600;letter-spacing:.5px}
+.chunk.done .ctt{text-decoration:line-through;text-decoration-color:rgba(46,38,28,.3)}
+.chunk .cmin{margin-left:auto;font-size:10.5px;color:var(--muted);letter-spacing:1px;flex-shrink:0}
+.addrow{display:flex;gap:8px;margin-top:12px}
+
+/* ============ 宝石柜 ============ */
+.gems{display:flex;flex-wrap:wrap;gap:14px;justify-content:flex-start;padding:6px 2px}
+.gem{position:relative;width:44px;height:44px;transition:transform .3s}
+.gem i{position:absolute;inset:0;display:block;background:linear-gradient(135deg,rgba(255,255,255,.85),rgba(255,255,255,0) 45%),var(--gc,#C98A2D);clip-path:polygon(50% 0,100% 35%,79% 100%,21% 100%,0 35%);box-shadow:inset 0 -6px 10px rgba(0,0,0,.22),0 4px 10px rgba(46,38,28,.18)}
+.gem.lit{transform:scale(1);filter:drop-shadow(0 3px 7px rgba(46,38,28,.25))}
+.gem.dim{opacity:.16;filter:grayscale(1)}
+.gem b{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);font-size:9px;color:var(--muted);letter-spacing:.5px;white-space:nowrap;font-weight:700}
+.gwrap{width:56px;text-align:center}
+
+/* ============ 说明 ============ */
+.about{margin-top:26px;border-top:1px solid var(--hair);padding-top:18px}
+.about summary{font-family:'Cormorant Garamond','Noto Serif SC',serif;font-size:13px;letter-spacing:3px;color:var(--muted);cursor:pointer;font-weight:600;list-style:none;text-align:center}
+.about summary::-webkit-details-marker{display:none}
+.about .ab{font-family:'Noto Serif SC',serif;font-size:12.5px;color:var(--ink2);letter-spacing:1px;line-height:2.2;margin-top:12px;padding:0 6px}
+.about .ab b{color:var(--ink)}
+
+/* ============ 统计 ============ */
+.stats{display:flex;gap:10px;margin-top:18px}
+.stat{flex:1;background:rgba(255,255,255,.6);border:1px solid var(--hair);border-radius:18px;text-align:center;padding:14px 6px}
+.stat .big{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:26px;line-height:1.2;color:var(--ink)}
+.stat .big small{font-size:12px;color:var(--muted);font-weight:600;margin-left:2px}
+.stat .lbl{font-size:10px;letter-spacing:2px;color:var(--muted);font-weight:700;margin-top:3px}
+
+footer{margin-top:64px;text-align:center;font-family:'Noto Serif SC',serif;font-size:11px;color:var(--muted);letter-spacing:2px;line-height:2.1}
+footer .fine{display:block;font-size:10px;opacity:.75;letter-spacing:1px;margin-top:6px}
+
+#toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,14px);z-index:60;background:var(--ink);color:var(--paper);padding:11px 24px;border-radius:999px;font-size:12.5px;letter-spacing:2px;opacity:0;pointer-events:none;transition:all .3s;max-width:86vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.spark{position:fixed;z-index:70;pointer-events:none;border-radius:50%;font-size:13px;animation:fly .9s ease forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Herbert A. Simon · Method</div>
+    <h1><span class="en serif">Simon Mine</span><span class="zh">钻 透</span></h1>
+    <div class="sub">持续钻探一处，直到出矿</div>
+    <div class="hero-line"></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab on" data-v="vMines">我的矿井</button>
+    <button class="tab" data-v="vGems">宝石柜</button>
+  </div>
+
+  <!-- ======== 矿井列表 ======== -->
+  <section class="view on" id="vMines">
+    <div class="motto">
+      <div class="en">“In six months, one can master any field.”</div>
+      <div class="zh">「只要有基础又肯下功夫，六个月可以掌握任何一门学问。」—— 赫伯特·西蒙</div>
+    </div>
+    <div class="sec">
+      <div class="sec-head"><h2>我的矿井</h2><span class="n" id="mineCnt"></span></div>
+      <div id="mineList"></div>
+      <div class="card">
+        <div class="chips" id="oreChips"></div>
+        <div class="newmine">
+          <input type="text" id="mineName" placeholder="想钻透的学问，如 JavaScript / 高级微观" maxlength="20">
+          <button class="btn" id="mineAdd">开矿</button>
+        </div>
+        <input type="text" id="mineGoal" placeholder="一句话目标：学完你想做到什么？（可留空）" style="margin-top:8px">
+      </div>
+    </div>
+    <details class="about"><summary>▸ 西蒙学习法是什么</summary>
+      <div class="ab">
+        <b>① 拆块</b> —— 把一门学问拆成一个个知识块，每块小到一次专注就能吃透。<br>
+        <b>② 集中钻探</b> —— 像矿工一样，盯住一处持续钻，不被别的科目分心。<br>
+        <b>③ 输出检验</b> —— 钻完合上材料，用自己的话讲明白，讲不出来就再钻一次。<br>
+        <b>④ 六个月拉通</b> —— 连续推进，一门接一门，而不是十门齐头并进。
+      </div>
+    </details>
+  </section>
+
+  <!-- ======== 矿内 ======== -->
+  <section class="view" id="vMine">
+    <button class="back" id="backBtn">← BACK TO MINES</button>
+    <div class="mhead">
+      <div class="badge" id="mBadge"></div>
+      <h2 id="mName"></h2>
+      <div class="goal" id="mGoal"></div>
+      <div class="weekbar">
+        <div class="lab"><span id="wLab"></span><span>26 周为一程</span></div>
+        <div class="tr"><i id="wFill"></i></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="big" id="sBlocks">0<small>/0</small></div><div class="lbl">已出矿</div></div>
+      <div class="stat"><div class="big" id="sMins">0<small>分</small></div><div class="lbl">钻探时长</div></div>
+      <div class="stat"><div class="big" id="sDays">0<small>天</small></div><div class="lbl">出矿日</div></div>
+    </div>
+
+    <div class="drill" id="drill">
+      <div class="dl">当前钻探</div>
+      <div class="ct" id="dTitle"></div>
+      <div class="ring">
+        <svg width="170" height="170"><circle cx="85" cy="85" r="76" fill="none" stroke="rgba(46,38,28,.09)" stroke-width="7"/><circle id="arc" cx="85" cy="85" r="76" fill="none" stroke="var(--mc,#6B5B45)" stroke-width="7" stroke-linecap="round" stroke-dasharray="477.5" stroke-dashoffset="0"/></svg>
+        <div class="t"><div class="tt" id="rMin">45:00</div><div class="ts" id="rState">待命</div></div>
+      </div>
+      <div class="chips" style="justify-content:center" id="durChips"></div>
+      <div class="dbtns">
+        <button class="btn" id="drillBtn">开始钻探</button>
+        <button class="btn ghost" id="giveBtn">这块先放放</button>
+      </div>
+      <div class="exam" id="exam">
+        <div class="el">⛏ 出矿检验 —— 合上材料，用自己的话讲明白</div>
+        <div class="hint">讲不出来的地方，就是还没钻透的地方。写完它就归你。</div>
+        <textarea id="exText" placeholder="这一块讲的是……比如：函数就是一个可以反复使用的动作盒子，给它输入，它给你输出……"></textarea>
+        <div class="dbtns" style="margin-top:12px">
+          <button class="btn" id="oreBtn">出矿 💎</button>
+          <button class="btn ghost" id="reDrill">还差一点，再钻</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><h2>矿层 · 知识块</h2><span class="n" id="cCnt"></span></div>
+      <div class="chunks" id="chunkList"></div>
+      <div class="addrow">
+        <input type="text" id="chunkName" placeholder="加一块矿层：一个吃透就算数的知识点" maxlength="30">
+        <button class="btn" id="chunkAdd">＋</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== 宝石柜 ======== -->
+  <section class="view" id="vGems">
+    <div class="sec">
+      <div class="sec-head"><h2>宝石柜</h2><span class="n" id="gCnt"></span></div>
+      <div class="card">
+        <div class="gems" id="gemWall"></div>
+        <div class="empty" id="gemEmpty" style="display:none">柜子还空着。钻透一块矿层，就收一颗宝石。</div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;letter-spacing:1px;font-family:'Noto Serif SC',serif">一颗宝石，就是一块真正讲得明白的知识</p>
+    </div>
+  </section>
+
+  <footer>
+    学问不是散着学的，是钻着学的。<br>
+    <span class="fine">数据只存在这台设备的浏览器里 · 西蒙学习法，灵感自赫伯特·西蒙</span>
+  </footer>
+</div>
+<div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s);
+const ORES=[["琥珀","#C98A2D"],["翡翠","#3E8E6B"],["蓝晶","#3D5A9E"],["紫晶","#8A5BA6"],["红宝石","#B23A52"],["黄玉","#B87A2E"]];
+const ROMAN=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+const DURS=[25,45,60];
+let S=JSON.parse(localStorage.getItem("sm_v1")||'{"mines":[],"cur":{}}');
+let curMine=null, curChunk=null, timer=null, remain=0, total=0, spent=0, running=false, dur=45;
+
+function save(){localStorage.setItem("sm_v1",JSON.stringify(S))}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2000)}
+function spark(x,y,n=14){
+  for(let i=0;i<n;i++){
+    const s=document.createElement("div");s.className="spark";s.textContent=["💎","✨","·"][i%3];
+    s.style.left=x+"px";s.style.top=y+"px";
+    s.style.setProperty("--dx",(Math.random()*160-80)+"px");s.style.setProperty("--dy",(Math.random()*-140-20)+"px");
+    s.style.animationDuration=(0.7+Math.random()*0.5)+"s";document.body.appendChild(s);setTimeout(()=>s.remove(),1200);
+  }
+}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+const R=i=>ROMAN[i]||String(i+1);
+
+/* ============ tab ============ */
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===t.dataset.v));
+  if(t.dataset.v==="vGems")renderGems();
+}));
+
+/* ============ 矿列表 ============ */
+const PICKS=["JavaScript","英语","线性代数","宏观经济学","Python","心理学导论"];
+function oreChips(){
+  $("#oreChips").innerHTML=ORES.map((o,i)=>`<button class="chip${i===0?" on":""}" data-c="${o[1]}"><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${o[1]};margin-right:6px;transform:rotate(45deg)"></i>${o[0]}</button>`).join("");
+  $("#oreChips").querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+    $("#oreChips").querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));c.classList.add("on");
+  }));
+}
+function renderMines(){
+  const box=$("#mineList");box.innerHTML="";
+  $("#mineCnt").textContent=S.mines.length?S.mines.length+" 座矿":"";
+  if(!S.mines.length){box.innerHTML='<div class="empty">还没有矿井。挑一种矿石，选一门想钻透的学问，开第一座矿。</div>';}
+  S.mines.forEach(m=>{
+    const done=m.chunks.filter(c=>c.done).length, pct=m.chunks.length?Math.round(done/m.chunks.length*100):0;
+    const el=document.createElement("div");el.className="mine-card";el.style.setProperty("--mc",m.color);
+    el.innerHTML=`<div class="mrow"><div class="mname">${m.name}</div><div class="mmeta">${done}/${m.chunks.length} 块 · ${m.mins||0} 分</div></div>
+      <div class="mbar"><i style="width:${pct}%"></i></div>
+      <div class="mstat"><span>开矿于 ${m.createdAt}</span>${m.goal?`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${m.goal}</span>`:""}</div>`;
+    el.addEventListener("click",()=>openMine(m.id));
+    box.appendChild(el);
+  });
+}
+$("#mineAdd").addEventListener("click",()=>{
+  const n=$("#mineName").value.trim();
+  if(!n){toast("先给这座矿起个名字");return}
+  const c=$("#oreChips .chip.on");
+  S.mines.push({id:"m"+Date.now(),name:n,goal:$("#mineGoal").value.trim(),color:c?c.dataset.c:ORES[0][1],createdAt:new Date().toISOString().slice(5).replace("-","/"),chunks:[],mins:0});
+  $("#mineName").value="";$("#mineGoal").value="";save();renderMines();
+  spark(innerWidth/2,innerHeight*.4,16);toast("矿开好了 —— 去拆第一块矿层");
+});
+$("#mineName").addEventListener("keydown",e=>{if(e.key==="Enter")$("#mineAdd").click()});
+
+/* ============ 矿内 ============ */
+function M(){return S.mines.find(m=>m.id===curMine)}
+function openMine(id){
+  curMine=id;const m=M();
+  $("#mBadge").style.background=m.color;
+  $("#mBadge").innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2l6 6-6 14L6 8z" fill="rgba(255,255,255,.25)"/><path d="M12 2l6 6H6z" fill="#fff" opacity=".55"/></svg>';
+  $("#mName").textContent=m.name;$("#mGoal").textContent=m.goal||"";
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id==="vMine"));
+  document.querySelector(".tabs").style.display="none";
+  curChunk=m.chunks.find(c=>!c.done)?.id||null;
+  durChips();renderMine();
+}
+$("#backBtn").addEventListener("click",()=>{
+  stopTick(false);
+  document.querySelector(".tabs").style.display="flex";
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id==="vMines"));
+  renderMines();
+});
+function renderMine(){
+  const m=M();if(!m)return;
+  document.documentElement.style.setProperty("--mc",m.color);
+  $("#drill").style.setProperty("--mc",m.color);
+  $("#arc").style.stroke=m.color;
+  const done=m.chunks.filter(c=>c.done).length;
+  $("#sBlocks").innerHTML=done+`<small>/`+m.chunks.length+`</small>`;
+  $("#sMins").innerHTML=(m.mins||0)+`<small>分</small>`;
+  $("#sDays").innerHTML=new Set(m.chunks.filter(c=>c.done).map(c=>c.day||"")).size+`<small>天</small>`;
+  const st=new Date(m.createdAtFull||Date.now()), now=new Date();
+  const weeks=Math.min(26,Math.max(1,Math.ceil((now-st)/6048e5)));
+  $("#wLab").textContent=`第 ${weeks} 周 / 26 周`;
+  $("#wFill").style.width=(weeks/26*100)+"%";
+  $("#cCnt").textContent=m.chunks.length?done+" / "+m.chunks.length+" 块":"";
+  const box=$("#chunkList");box.innerHTML="";
+  if(!m.chunks.length)box.innerHTML='<div class="empty">矿层还没拆。一次加一块：小到一次专注能吃透。</div>';
+  m.chunks.forEach((c,i)=>{
+    const el=document.createElement("div");
+    el.className="chunk"+(c.id===curChunk?" cur":"")+(c.done?" done":"");
+    el.innerHTML=`<div class="st">${c.done?'<svg viewBox="0 0 24 24" fill="none" stroke="'+m.color+'" stroke-width="3.2"><path d="M4 12l5.5 5.5L20 6.5"/></svg>':(c.id===curChunk?"▸":"")}</div>
+      <div class="ctt"><span style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--muted);margin-right:6px">${R(i)}</span>${c.title}</div>
+      ${c.mins?`<div class="cmin">${c.mins}分</div>`:""}`;
+    el.addEventListener("click",()=>{
+      if(c.done){toast("这块已经出矿了 💎");return}
+      if(c.id===curChunk){toast("就是这块 —— 开始钻探");return}
+      curChunk=c.id;stopTick(false);$("#exam").classList.remove("on");renderMine();toast("换到这块矿层");
+    });
+    box.appendChild(el);
+  });
+  updateDrill();
+}
+function updateDrill(){
+  const m=M();const c=m?.chunks.find(x=>x.id===curChunk);
+  if(!c){$("#dTitle").textContent="—— 先在下面加一块矿层 ——";$("#drillBtn").disabled=true;$("#drillBtn").style.opacity=.4;$("#giveBtn").style.display="none";return}
+  $("#drillBtn").disabled=false;$("#drillBtn").style.opacity=1;$("#giveBtn").style.display="";
+  $("#dTitle").textContent=c.title;
+  if(!running&&spent===0){remain=dur*60;total=remain}
+  $("#rMin").textContent=fmt(remain);$("#rState").textContent=running?"钻探中":(spent>0?"暂停":"待命");
+  $("#arc").style.strokeDashoffset=477.5*(1-(total?(total-remain)/total:0));
+}
+$("#chunkAdd").addEventListener("click",()=>{
+  const m=M();const n=$("#chunkName").value.trim();
+  if(!n){toast("写个块名，小到一次能吃透");return}
+  const ch={id:"c"+Date.now(),title:n,done:false,mins:0,output:""};
+  m.chunks.push(ch);
+  if(!curChunk)curChunk=ch.id;
+  $("#chunkName").value="";save();renderMine();toast("加了一块矿层");
+});
+$("#chunkName").addEventListener("keydown",e=>{if(e.key==="Enter")$("#chunkAdd").click()});
+
+/* ============ 计时 ============ */
+function durChips(){
+  $("#durChips").innerHTML=DURS.map(d=>`<button class="chip${d===dur?" on":""}" data-d="${d}">${d} 分钟</button>`).join("");
+  $("#durChips").querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+    if(running){toast("钻探中，先歇手再换时长");return}
+    dur=+c.dataset.d;spent=0;durChips();updateDrill();
+  }));
+}
+function stopTick(reset){
+  clearInterval(timer);timer=null;running=false;
+  if(reset){spent=0;remain=dur*60;total=remain}
+  updateDrill();
+}
+$("#drillBtn").addEventListener("click",()=>{
+  if(running){stopTick(false);toast("暂停 · 矿灯还亮着");return}
+  if(!curChunk)return;
+  running=true;$("#rState").textContent="钻探中";$("#drillBtn").textContent="暂停";
+  timer=setInterval(()=>{
+    remain--;spent++;
+    $("#rMin").textContent=fmt(remain);
+    $("#arc").style.strokeDashoffset=477.5*(1-((total-remain)/total));
+    if(remain<=0){clearInterval(timer);timer=null;running=false;
+      $("#drillBtn").textContent="开始钻探";$("#rState").textContent="一钻完成";
+      $("#exam").classList.add("on");$("#exText").focus();
+      spark(innerWidth/2,innerHeight*.35,18);toast("计时到了 —— 讲讲这块，讲明白就出矿");
+    }
+  },1000);
+});
+$("#giveBtn").addEventListener("click",()=>{
+  const m=M();const i=m.chunks.findIndex(c=>c.id===curChunk);
+  if(i<0)return;
+  const next=m.chunks.find(c=>!c.done&&c.id!==curChunk);
+  if(spent>0){m.chunks[i].mins=(m.chunks[i].mins||0)+Math.round(spent/60);m.mins=(m.mins||0)+Math.round(spent/60)}
+  stopTick(true);$("#exam").classList.remove("on");
+  curChunk=next?next.id:null;save();renderMine();
+  toast(spent>60?"钻过的 "+Math.round(spent/60)+" 分钟记上了 · 先放一放":"先放一放，随时回来");
+});
+$("#reDrill").addEventListener("click",()=>{
+  $("#exam").classList.remove("on");stopTick(true);toast("再钻一轮 —— 钻透为止");
+});
+$("#oreBtn").addEventListener("click",()=>{
+  const m=M();const c=m.chunks.find(x=>x.id===curChunk);if(!c)return;
+  const txt=$("#exText").value.trim();
+  if(txt.length<10){toast("多讲两句 —— 讲明白才算数");return}
+  c.done=true;c.output=txt;c.mins=(c.mins||0)+Math.round(spent/60);
+  c.day=new Date().toISOString().slice(0,10);
+  m.mins=(m.mins||0)+Math.round(spent/60);
+  save();stopTick(true);$("#exam").classList.remove("on");$("#exText").value="";
+  const nxt=m.chunks.find(x=>!x.done);curChunk=nxt?nxt.id:null;
+  renderMine();
+  spark(innerWidth/2,innerHeight*.42,26);toast("出矿了 💎 下一层已备好");
+});
+
+/* ============ 宝石柜 ============ */
+function renderGems(){
+  const wall=$("#gemWall");wall.innerHTML="";
+  const all=[];S.mines.forEach(m=>m.chunks.forEach(c=>{if(c.done)all.push({m,c})}));
+  $("#gCnt").textContent=all.length?all.length+" 颗":"";
+  $("#gemEmpty").style.display=all.length?"none":"block";
+  all.forEach(({m,c},i)=>{
+    const g=document.createElement("div");g.className="gwrap";
+    g.innerHTML=`<div class="gem lit" style="--gc:${m.color}"><i></i></div><b>${c.title.slice(0,6)}</b>`;
+    g.querySelector(".gem").addEventListener("click",e=>{spark(e.clientX,e.clientY,8);toast(m.name+" · "+c.title)});
+    wall.appendChild(g);
+  });
+}
+
+oreChips();renderMines();durChips();
+</script>
+</body>
+</html>
