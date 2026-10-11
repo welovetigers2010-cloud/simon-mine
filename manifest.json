@@ -1,0 +1,21 @@
+{
+ "name": "钻透",
+ "short_name": "钻",
+ "start_url": "./",
+ "display": "standalone",
+ "background_color": "#F7F3EC",
+ "theme_color": "#F7F3EC",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
